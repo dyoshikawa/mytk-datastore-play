@@ -45,6 +45,6 @@ class TweetsSchedulers {
     val tf: TwitterFactory = new TwitterFactory(cb.build)
     val twitter: Twitter = tf.getInstance
     val user = twitter.showUser("dayukoume")
-    allTweet(twitter, user.getId, None, 0,)
+    allTweet(twitter, user.getId, None, 0)
   }
 }
