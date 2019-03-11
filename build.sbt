@@ -24,8 +24,8 @@ libraryDependencies ++= Seq(jdbc,
   "io.circe" %% "circe-parser" % "0.11.0",
   "com.dripower" %% "play-circe" % "2711.0",
   "org.flywaydb" %% "flyway-play" % "5.2.0",
-  "org.twitter4j" % "twitter4j-core" % "4.0.4",
-  "org.twitter4j" % "twitter4j-stream" % "4.0.4"
+  "org.twitter4j" % "twitter4j-core" % "4.0.7",
+  "org.twitter4j" % "twitter4j-stream" % "4.0.7"
 )
 
 unmanagedResourceDirectories in Test <+= baseDirectory(_ / "target/web/public/test")
