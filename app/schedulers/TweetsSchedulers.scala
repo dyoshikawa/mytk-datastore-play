@@ -1,55 +1,50 @@
 package schedulers
 
-import java.io._
-import java.net.URL
-import twitter4j._
-import scala.sys.process._
-import scala.language.postfixOps
+import twitter4j.conf.ConfigurationBuilder
+import twitter4j.{Paging, Status, Twitter, TwitterFactory}
 
+import scala.collection.JavaConverters._
 
-class TweetsSchedulers extends StatusListener{
-  override def onDeletionNotice(statusDeletionNotice :StatusDeletionNotice) ={
-    // ツイートが削除された時に発動します
-    // 今回は無視
-  }
-
-  override def onScrubGeo(userId :Long, upToStatusId :Long) ={
-    // 今回は無視
-  }
-
-  override def onStatus(status :Status) ={
-    // ツイートされた時に発動します
-    val user = status.getUser()
-    val file = new File(new File(".").getCanonicalPath, s"files/${user.getId}.txt")
-    s"echo ${status.getText()}" #>> file !
-
-    val medias = status.getMediaEntities().map(x => x.getMediaURL()).toList
-    medias.zipWithIndex.foreach{case(x:String, i:Int) =>
-      val stream = new URL(x).openStream
-      val buf = Stream.continually(stream.read).takeWhile( -1 != ).map(_.byteValue).toArray
-      val nameOnly = x.drop(x.lastIndexOf('/'))
-      val fileName = nameOnly.split('.').mkString(i.toString ++ ".")
-      val dir = (new File(".").getCanonicalPath).toString ++ s"/files/${user.getId}/"
-      s"mkdir -p ${dir}"!
-      val imageFile = new File(dir, s"${fileName}")
-      val bw = new BufferedOutputStream(new FileOutputStream(imageFile))
-      stream.close()
-      bw.write(buf)
-      bw.close
+class TweetsSchedulers {
+  def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
+    if (count > 30) {
+      return
     }
+    val paging: Paging = new Paging(1, 200)
+    maxId match {
+      case None =>
+        println("none")
+      case Some(m) =>
+        paging.setMaxId(m)
+    }
+    val tweetList: Seq[Status] = twitter.getUserTimeline(userId, paging).asScala
+    val newMaxId: Long = tweetList.last.getId
+    if (newMaxId == maxId.getOrElse(0)) {
+      return
+    }
+    println(tweetList.last.getId)
+    allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
 
-  override def onTrackLimitationNotice(numberOfLimitedStatuses :Int) ={
-    // 今回は無視します
+  def put(): Unit = {
+
   }
 
-  override def onException(e :Exception) ={
-    // 例外が起こった場合に通知されます
-    // 今回はスタックトレースでも出しておきます
-    e.printStackTrace();
-  }
+  def fetch(): Unit = {
+    val consumerKey = sys.env.getOrElse("TWITTER_CONSUMER_KEY", "TWITTER_CONSUMER_KEY")
+    val consumerSecret = sys.env.getOrElse("TWITTER_CONSUMER_SECRET", "TWITTER_CONSUMER_SECRET")
+    val accessToken = sys.env.getOrElse("TWITTER_ACCESS_TOKEN", "TWITTER_ACCESS_TOKEN")
+    val accessTokenSecret = sys.env.getOrElse("TWITTER_ACCESS_TOKEN_SECRET", "TWITTER_ACCESS_TOKEN_SECRET")
 
-  override def onStallWarning(e: StallWarning) = {
-    // 変わったらしい
+    val cb: ConfigurationBuilder = new ConfigurationBuilder
+    cb.setDebugEnabled(true)
+      .setOAuthConsumerKey(consumerKey)
+      .setOAuthConsumerSecret(consumerSecret)
+      .setOAuthAccessToken(accessToken)
+      .setOAuthAccessTokenSecret(accessTokenSecret)
+    val tf: TwitterFactory = new TwitterFactory(cb.build)
+    val twitter: Twitter = tf.getInstance
+    val user = twitter.showUser("dayukoume")
+    allTweet(twitter, user.getId, None, 0,)
   }
 }
