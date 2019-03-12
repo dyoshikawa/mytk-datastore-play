@@ -7,6 +7,7 @@ import twitter4j.conf.ConfigurationBuilder
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import collection.JavaConverters._
 
 class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
