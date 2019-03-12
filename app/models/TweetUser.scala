@@ -3,15 +3,17 @@ package models
 import java.time.LocalDateTime
 
 import scalikejdbc._
-import skinny.orm.SkinnyCRUDMapper
+import skinny.orm.SkinnyCRUDMapperWithId
 
-case class TweetUser(twitterUserId: Long,
+case class TwitterUserId(value: Long)
+
+case class TweetUser(twitterUserId: TwitterUserId,
                      screenName: String,
                      createdAt: LocalDateTime,
                      updatedAt: LocalDateTime,
                      tweets: Seq[Tweet] = Nil)
 
-object TweetUser extends SkinnyCRUDMapper[TweetUser] {
+object TweetUser extends SkinnyCRUDMapperWithId[TwitterUserId, TweetUser] {
   override def connectionPoolName = 'default
 
   override def schemaName = Some("public")
@@ -20,8 +22,12 @@ object TweetUser extends SkinnyCRUDMapper[TweetUser] {
   override lazy val defaultAlias = createAlias("m")
   private[this] lazy val m = defaultAlias
 
+  override def idToRawValue(id: TwitterUserId) = id.value
+  override def rawValueToId(value: Any) = TwitterUserId(value.toString.toLong)
+  override def primaryKeyFieldName = "twitter_user_id"
+
   override def extract(rs: WrappedResultSet, n: ResultName[TweetUser]): TweetUser = new TweetUser(
-    twitterUserId = rs.get(n.twitterUserId),
+    twitterUserId = TwitterUserId(rs.get(n.twitterUserId)),
     screenName = rs.get(n.screenName),
     createdAt = rs.get(n.createdAt),
     updatedAt = rs.get(n.updatedAt)
@@ -29,7 +35,7 @@ object TweetUser extends SkinnyCRUDMapper[TweetUser] {
 
   lazy val tweetsRef = hasMany[Tweet](
     many = Tweet -> Tweet.defaultAlias,
-    on = (u, t) => sqls.eq(u.id, t.twitterUserId),
+    on = (tu, tt) => sqls.eq(tu.twitterUserId, tt.twitterUserId),
     merge = (twitterUser, tweets) => twitterUser.copy(tweets = tweets)
   )
 

@@ -56,7 +56,7 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
   def putTweet(twitterTweetId: Long, text: String, datetime: LocalDateTime): Unit = {
     implicit val session = AutoSession
 
-    Tweet.findByTwitterTweetId("twitterTweetId")
+    Tweet.findByTwitterTweetId(twitterTweetId)
   }
 
   def main(): Unit = {
