@@ -55,6 +55,7 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
 
   actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {
     // the block of code that will be executed
+    println("Executing fetch tweets...")
     main()
   }
 }
