@@ -1,20 +1,20 @@
 package tasks
 
-import akka.actor.ActorSystem
-import javax.inject.Inject
-import twitter4j.{Paging, Status, Twitter, TwitterFactory}
-import twitter4j.conf.ConfigurationBuilder
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import collection.JavaConverters._
-import scalikejdbc._
 import java.time._
 
+import akka.actor.ActorSystem
+import javax.inject.Inject
+import models.TweetUser
+import models.Tweet
+import scalikejdbc._
+import twitter4j.conf.ConfigurationBuilder
+import twitter4j.{Paging, Status, Twitter, TwitterFactory}
+
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
 class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
-
-  case class Tweet(tweetUserId: Int, text: String, hashTag: String, datetime: LocalDateTime)
-
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
     if (count > 30) {
       return
@@ -36,16 +36,27 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
 
-  def putTweetUser(screenName: String, twitterId: Long): Unit = {
+  def putTweetUser(screenName: String, twitterUserId: Long): Unit = {
     implicit val session = AutoSession
 
-    sql"INSERT INTO tweet_users (screen_name, twitter_id, created_at, updated_at) VALUES ($screenName, $twitterId, NOW(), NOW())".update.apply
+    TweetUser.findByTwitterId(twitterUserId) match {
+      case Some(t) =>
+        println(t.twitterUserId)
+      case None =>
+        println("NONE!!!!")
+        TweetUser.createWithAttributes(
+          'twitterUserId -> twitterUserId,
+          'screenName -> screenName,
+          'createdAt -> LocalDateTime.now,
+          'updatedAt -> LocalDateTime.now
+        )
+    }
   }
 
-  def putTweet(): Unit = {
+  def putTweet(twitterTweetId: Long, text: String, datetime: LocalDateTime): Unit = {
     implicit val session = AutoSession
 
-    sql"INSERT INTO user (content) VALUES (screen_name, twitter_id, created_at, updated_at) "
+    Tweet.findByTwitterTweetId("twitterTweetId")
   }
 
   def main(): Unit = {
