@@ -11,9 +11,10 @@ import collection.JavaConverters._
 import scalikejdbc._
 import java.time._
 
-case class TweetUser(displayName, twitterId: String, hash_tag: String, datetime: LocalDateTime)
-
 class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
+
+  case class Tweet(tweetUserId: Int, text: String, hashTag: String, datetime: LocalDateTime)
+
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
     if (count > 30) {
       return
@@ -35,10 +36,10 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
 
-  def putTweetUser(displayName: String): Unit = {
+  def putTweetUser(screenName: String, twitterId: Long): Unit = {
     implicit val session = AutoSession
 
-    sql"INSERT INTO tweet_users (display_name, twitter_id, hash_tag, datetime, NOW(), NOW()) VALUES ()".update.apply
+    sql"INSERT INTO tweet_users (display_name, twitter_id, created_at, updated_at) VALUES ($screenName, $twitterId, NOW(), NOW())".update.apply
   }
 
   def putTweet(): Unit = {
@@ -62,6 +63,7 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     val tf: TwitterFactory = new TwitterFactory(cb.build)
     val twitter: Twitter = tf.getInstance
     val user = twitter.showUser("dayukoume")
+    putTweetUser(user.getScreenName, user.getId)
     allTweet(twitter, user.getId, None, 0)
   }
 
