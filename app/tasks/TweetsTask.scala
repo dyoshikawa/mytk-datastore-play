@@ -39,13 +39,13 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
   def putTweetUser(screenName: String, twitterId: Long): Unit = {
     implicit val session = AutoSession
 
-    sql"INSERT INTO tweet_users (display_name, twitter_id, created_at, updated_at) VALUES ($screenName, $twitterId, NOW(), NOW())".update.apply
+    sql"INSERT INTO tweet_users (screen_name, twitter_id, created_at, updated_at) VALUES ($screenName, $twitterId, NOW(), NOW())".update.apply
   }
 
   def putTweet(): Unit = {
     implicit val session = AutoSession
 
-    sql"INSERT INTO user (content) VALUES ()"
+    sql"INSERT INTO user (content) VALUES (screen_name, twitter_id, created_at, updated_at) "
   }
 
   def main(): Unit = {
