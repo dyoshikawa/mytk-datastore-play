@@ -8,6 +8,9 @@ import twitter4j.conf.ConfigurationBuilder
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import collection.JavaConverters._
+import scalikejdbc._
+
+case class TweetUser(displayName, twitterId: String, hash_tag: String, datetime: java.util.Date)
 
 class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
@@ -31,8 +34,16 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
 
-  def put(): Unit = {
+  def putTweetUser(displayName: String): Unit = {
+    implicit val session = AutoSession
 
+    sql"INSERT INTO tweet_users (display_name, twitter_id, hash_tag, datetime, created_at, updated_at) VALUES ()".update.apply
+  }
+
+  def putTweet(): Unit = {
+    implicit val session = AutoSession
+
+    sql"INSERT INTO user (content) VALUES ()"
   }
 
   def main(): Unit = {
