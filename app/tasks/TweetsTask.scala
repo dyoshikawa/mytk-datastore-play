@@ -1,11 +1,14 @@
-package schedulers
+package tasks
 
-import twitter4j.conf.ConfigurationBuilder
+import akka.actor.ActorSystem
+import javax.inject.Inject
 import twitter4j.{Paging, Status, Twitter, TwitterFactory}
+import twitter4j.conf.ConfigurationBuilder
 
-import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
-class TweetsSchedulers {
+class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
     if (count > 30) {
       return
@@ -47,5 +50,10 @@ class TweetsSchedulers {
     val twitter: Twitter = tf.getInstance
     val user = twitter.showUser("dayukoume")
     allTweet(twitter, user.getId, None, 0)
+  }
+
+  actorSystem.scheduler.schedule(initialDelay = 10.seconds, interval = 1.minute) {
+    // the block of code that will be executed
+    main()
   }
 }

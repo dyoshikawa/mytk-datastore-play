@@ -11,3 +11,12 @@ services:
       - 5432:5432
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+
+  migrate:
+    image: migrate/migrate:latest
+    environment:
+      PGSSLMODE: disable
+    tty: true
+    entrypoint: sh
+    volumes:
+      - ./conf/db/migrations:/migrations
