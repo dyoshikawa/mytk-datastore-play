@@ -33,6 +33,10 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     }
     println(tweetList.last.getId)
     println(tweetList.last.getHashtagEntities)
+    tweetList.foreach{ tweet =>
+      putTweet(tweet.getId, tweet.getUser.getId, tweet.getText,
+        LocalDateTime.ofInstant(tweet.getCreatedAt.toInstant, ZoneId.systemDefault))
+    }
     allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
 
@@ -53,10 +57,23 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     }
   }
 
-  def putTweet(twitterTweetId: Long, text: String, datetime: LocalDateTime): Unit = {
+  def putTweet(twitterTweetId: Long, tweetUserTwitterUserId: Long, text: String, datetime: LocalDateTime): Unit = {
     implicit val session = AutoSession
 
-    Tweet.findByTwitterTweetId(twitterTweetId)
+    Tweet.findByTwitterTweetId(twitterTweetId) match {
+      case Some(t) =>
+        println(t.twitterTweetId)
+      case None =>
+        println("NONE tweet")
+        Tweet.createWithAttributes(
+          'twitterTweetId -> twitterTweetId,
+          'tweetUserTwitterUserId -> tweetUserTwitterUserId,
+          'text -> text,
+          'datetime -> datetime,
+          'createdAt -> LocalDateTime.now,
+          'updatedAt -> LocalDateTime.now
+        )
+    }
   }
 
   def main(): Unit = {

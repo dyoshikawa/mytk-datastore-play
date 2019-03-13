@@ -19,8 +19,8 @@ object TweetUser extends SkinnyCRUDMapperWithId[TwitterUserId, TweetUser] {
   override def schemaName = Some("public")
 
   override lazy val tableName = "tweet_users"
-  override lazy val defaultAlias = createAlias("m")
-  private[this] lazy val m = defaultAlias
+  override lazy val defaultAlias = createAlias("tu")
+  private[this] lazy val tu = defaultAlias
 
   override def idToRawValue(id: TwitterUserId) = id.value
   override def rawValueToId(value: Any) = TwitterUserId(value.toString.toLong)
@@ -35,11 +35,11 @@ object TweetUser extends SkinnyCRUDMapperWithId[TwitterUserId, TweetUser] {
 
   lazy val tweetsRef = hasMany[Tweet](
     many = Tweet -> Tweet.defaultAlias,
-    on = (tu, tt) => sqls.eq(tu.twitterUserId, tt.twitterUserId),
+    on = (tu, tt) => sqls.eq(tu.twitterUserId, tt.tweetUserTwitterUserId),
     merge = (twitterUser, tweets) => twitterUser.copy(tweets = tweets)
   )
 
   def findByTwitterId(twitterUserId: Long)(implicit s: DBSession = autoSession): Option[TweetUser] = {
-    findBy(sqls.eq(m.twitterUserId, twitterUserId))
+    findBy(sqls.eq(tu.twitterUserId, twitterUserId))
   }
 }
