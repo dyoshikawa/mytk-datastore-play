@@ -4,8 +4,7 @@ import java.time._
 
 import akka.actor.ActorSystem
 import javax.inject.Inject
-import models.TweetUser
-import models.Tweet
+import models.{Tweet, TweetUser}
 import scalikejdbc._
 import twitter4j.conf.ConfigurationBuilder
 import twitter4j.{Paging, Status, Twitter, TwitterFactory}
@@ -15,6 +14,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: ExecutionContext) {
+
+  case class TweetData(twitterTweetId: Long, twitterUserId: Long, text: String,
+                       datetime: LocalDateTime, favoriteCount: Int, retweetCount: Int)
+
   def allTweet(twitter: Twitter, userId: Long, maxId: Option[Long], count: Int): Unit = {
     if (count > 30) {
       return
@@ -33,9 +36,16 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     }
     println(tweetList.last.getId)
     println(tweetList.last.getHashtagEntities)
-    tweetList.foreach{ tweet =>
-      putTweet(tweet.getId, tweet.getUser.getId, tweet.getText,
-        LocalDateTime.ofInstant(tweet.getCreatedAt.toInstant, ZoneId.systemDefault))
+    println(tweetList.last.getFavoriteCount)
+    tweetList.foreach { tweet =>
+      putTweet(TweetData(
+        twitterTweetId = tweet.getId,
+        twitterUserId = tweet.getUser.getId,
+        text = tweet.getText,
+        datetime = LocalDateTime.ofInstant(tweet.getCreatedAt.toInstant, ZoneId.systemDefault),
+        favoriteCount = tweet.getFavoriteCount,
+        retweetCount = tweet.getRetweetCount
+      ))
     }
     allTweet(twitter, userId, Option(newMaxId), count + 1)
   }
@@ -57,19 +67,21 @@ class TweetsTask @Inject()(actorSystem: ActorSystem)(implicit executionContext: 
     }
   }
 
-  def putTweet(twitterTweetId: Long, tweetUserTwitterUserId: Long, text: String, datetime: LocalDateTime): Unit = {
+  def putTweet(tweet: TweetData): Unit = {
     implicit val session = AutoSession
 
-    Tweet.findByTwitterTweetId(twitterTweetId) match {
+    Tweet.findByTwitterTweetId(tweet.twitterTweetId) match {
       case Some(t) =>
         println(t.twitterTweetId)
       case None =>
         println("NONE tweet")
         Tweet.createWithAttributes(
-          'twitterTweetId -> twitterTweetId,
-          'tweetUserTwitterUserId -> tweetUserTwitterUserId,
-          'text -> text,
-          'datetime -> datetime,
+          'twitterTweetId -> tweet.twitterTweetId,
+          'tweetUserTwitterUserId -> tweet.twitterUserId,
+          'text -> tweet.text,
+          'favoriteCount -> tweet.favoriteCount,
+          'retweetCount -> tweet.retweetCount,
+          'datetime -> tweet.datetime,
           'createdAt -> LocalDateTime.now,
           'updatedAt -> LocalDateTime.now
         )

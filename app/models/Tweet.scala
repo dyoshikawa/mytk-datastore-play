@@ -11,6 +11,8 @@ case class Tweet(twitterTweetId: TwitterTweetId,
                  tweetUserTwitterUserId: TwitterUserId,
                  text: String,
                  datetime: LocalDateTime,
+                 favoriteCount: Int,
+                 retweetCount: Int,
                  createdAt: LocalDateTime,
                  updatedAt: LocalDateTime,
                  tweetUser: Option[TweetUser] = None)
@@ -35,6 +37,8 @@ object Tweet extends SkinnyCRUDMapperWithId[TwitterTweetId, Tweet] {
     tweetUserTwitterUserId = TwitterUserId(rs.get(n.tweetUserTwitterUserId)),
     text = rs.get(n.text),
     datetime = rs.get(n.datetime),
+    favoriteCount = rs.get(n.favoriteCount),
+    retweetCount = rs.get(n.retweetCount),
     createdAt = rs.get(n.createdAt),
     updatedAt = rs.get(n.updatedAt)
   )
